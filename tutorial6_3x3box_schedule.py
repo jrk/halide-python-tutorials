@@ -136,13 +136,15 @@ def main():
 
     # In effect, this schedule turned a separable blur into the brute force
     # 2D blur
-    # The compiler would also probably merge the various divisions by 3
-    # into a single division by 9
+    # The compiler would also  merge the various divisions by 3
+    # into a single division by 9, or better a multiplication by the reciprocal. 
+    # The reciprocal probably would stay in register, making everything blazingly fast. 
+    # Compilers can be pretty smart.  
 
-#### SCHEDULE 3 : TILED AND MERGED ####
+#### SCHEDULE 3 : TILING and FUSION ####
 
-    # This is a high-performance schedule that computes computation
-    # in tiles and merges the two stages of the pipeline within a tile
+    # This is a good schedule (good locality, limited redundancy) that performs 
+    # computation in tiles and interleaves the two stages of the pipeline within a tile
 
     # redefine everything to start fresh
     x, y = Var('x'), Var('y') 
@@ -189,7 +191,7 @@ def main():
     if False: # I just want to save time and not execute it
         width, height = input.width()-2, input.height()-2
         out=numpy.empty((width, height))
-        for yo in xrange(ceil(height/32.0)): #this for loop is parallel
+        for yo in xrange(ceil(height/32.0)): 
             for xo in xrange(ceil(width/256.0)):
                 # first compute blur_x
                 # allocate a temporary buffer
@@ -207,8 +209,65 @@ def main():
                         out[x,y] = (blur_x[x,y]+blur_x[x,y+1]+blur_x[x,y+2])/3
 
 
-    # add scan
+#### SCHEDULE 4 : TILING, FUSION, and PARALLELISM ####
 
+    # This is a high-performance schedule that adds multicore and SIMD parallelism 
+    # to the fused and tiled schedule above. 
+
+    # redefine everything to start fresh
+    x, y = Var('x'), Var('y') 
+    blur_x, blur_y = Func('blur_x'), Func('blur_y') 
+    blur_x[x,y] = (input[x,y]+input[x+1,y]+input[x+2,y])/3
+    blur_y[x,y] = (blur_x[x,y]+blur_x[x,y+1]+blur_x[x,y+2])/3
+
+    # schedule
+    
+    # Declare the inner tile variables 
+    xo, yo, xi, yi = Var('xo'), Var('yo'), Var('xi'), Var('yi')
+
+    # First schedule the last (output) stage
+    # We specify computation in tiles of 256x32    
+    blur_y.tile(x, y, xo, yo, xi, yi, 256, 32)   
+    # We then parallelize the for loop corresponding to the yo tile index 
+    # Halide will generate multithreaded code and runtime able to take advantage 
+    # of multicore processors. 
+    blur_y.parallel(yo)
+    # We then specify that we want to use the SIMD vector units 
+    # (Single Instruction Multiple Data) and compute 8 pixels at once
+    # Only try to vectorize the innermost loops.  
+    # There is no guarantee that the compiler will successfully achieve vectorization
+    # For example, if you specify a width larger than what your processor can achieve, 
+    # it won't work 
+    blur_y.vectorize(xi, 8)
+
+    # We now specify when the earlier (producer) stage blur_x gets evaluated.
+    # We decide to compute it at the tile granularity of blur_y and use the
+    # compute_at method. 
+    # This means that blur_x will be evaluated in a loop nested inside the
+    # 'xo' outer tile loop of blur_y
+    # since xo is nested inside blur_y's yo and since yo is evaluated in parallel, 
+    # then blur_x will also be evaluated in parallel
+    # Again, we don't need to worry about bound expansion
+    blur_x.compute_at(blur_y, x) 
+
+    # We then specify that blur_x too should be vectorized
+    blur_x.vectorize(xi, 8)
+
+
+    # This schedule achieves the same excellent locality  and low redundancy 
+    # as the above tiling and fusion. In addition, it leverages high parallelism. 
+
+    print 'schedule 4:'
+    t = runAndMeasure(blur_y, input.width()-2, input.height()-2)
+    print 'speedup: ', refTime/t
+
+    # the equivalent python code would be similar as above but with a parallel y loop 
+    # and a modified inner xi loop. In effect, vectorization adds an extra level of nesting 
+    # in strides of 8 but unrolls the innermost level into single vector instructions
+
+    print 'success!'
+    return 0
+    
 #usual python business to declare main function in module. 
 if __name__ == '__main__': 
     main()

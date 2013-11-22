@@ -2,7 +2,7 @@
 
 # This lessons demonstrates clamping to deal with boundary pixels for stencil
 # operations. When using neighboring pixel at the border of the image, we might
-# use indices that are negative or beyong the image size and would return an error.  
+# use indices that are negative or beyond the image size and would return an error.  
 # We will simply clamp the coordinates.
 
 # This tutorial is a minor modification of the previous one. 
@@ -13,7 +13,6 @@ import os, sys
 from halide import *
 
 #Python Imaging Library will be used for IO
-import Image as PIL
 import imageIO
 
 def main():
@@ -27,7 +26,9 @@ def main():
 
     
     # As usual, let's load an input
-    input = Image(Float(32), 'halide/data/rgb.png')
+    im=imageIO.imread('rgb.png')    
+    # and create a Halide representation of this image
+    input = Image(Float(32), im)
 
     # Next we declaure the Vars
     # We here give an extra argument to the Var constructor, an optional string that
@@ -35,7 +36,7 @@ def main():
     # Otherwise, the names x, y, c are only known to the Python side
     x, y, c = Var('x'), Var('y'), Var('c') 
     
-    # Next we declare the three Funcs corresponding to the various stages of the gardient .
+    # Next we declare the three Funcs corresponding to the various stages of the gradient .
     # Similarly, we pass strings to name them. 
     gx = Func('gx') 
     gy = Func('gy') 
@@ -53,7 +54,7 @@ def main():
 
     ##### MODIFIED CODE ####
 
-    # We can now safely define our horizontal gardient using finite difference
+    # We can now safely define our horizontal gradient using finite difference
     # The value at a pixel is the input at that pixel minus its left neighbor.
     # Note how we now use the more direct definition of Funcs without declaring
     # intermediate Exprs

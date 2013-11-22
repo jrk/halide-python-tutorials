@@ -7,7 +7,6 @@ from halide import *
 # The only Halide module  you need is halide. It includes all of Halide
 
 #Python Imaging Library will be used for IO
-import Image as PIL
 import imageIO
 
 def main():
@@ -16,9 +15,14 @@ def main():
     # brightens an image.
 
     # First we'll load the input image we wish to brighten.
-    input = Image(Float(32), 'halide/data/rgb.png')
+    # We'll use imageIO to get a numpy array from a PNG image
+    im=imageIO.imread('rgb.png')
+
+    # We then create a Halide representation of this image using the Image 
+    # constructor
+    input = Image(Float(32), im)
     # the first input to the Image constructor is a type 32-bit float here)
-    # the second can be a filename, a PIL image or nothing
+    # the second can be a filename, a numpy array or nothing
     # when it's a filename, the file gets loaded
 
     # Next we declare our Func object that represents our one pipeline
@@ -39,9 +43,7 @@ def main():
     # again note the square brackets
     value= input[x, y, c]
 
-    # Multiply it by 1.5 to brighten it. Halide represents real
-    # numbers as floats, not doubles, so we stick an 'f' on the end
-    # of our constant.
+    # Multiply it by 1.5 to brighten it. 
     value = value * 1.5
 
     # Finally define the function.
@@ -49,7 +51,7 @@ def main():
 
     # The equivalent one-liner to all of the above is:
     # 
-    # brighter(x, y, c) = input(x, y, c) * 1.5f
+    # brighter[x, y, c] = input[x, y, c] * 1.5
     # 
 
     # Remember. All we've done so far is build a representation of a
@@ -64,16 +66,13 @@ def main():
     # on the input image.
     output = brighter.realize(input.width(), input.height(), input.channels());
 
-    # realize provides us with Halide's internal datatype for images
-    # we now convert it to a numpy array using a double-conversion
-    # (from Halide to the Python Imaging Library (PIL) and from PIL to numpy. 
+    # realize provides us with some Halide internal datatype representing image buffers.
+    # We want to convert it to a numpy array. For this, we first turn it into a 
+    # proper Halide Image using the Halide constructor Image(), and we then convert 
+    # it to a numpy array. It's a little verbose but not a big deal. 
     outputNP=numpy.array(Image(output))
 
-    print outputNP.dtype, outputNP.shape
-    
-    imageIO.imwrite(outputNP, gamma=1.0)
-    # show the output for inspection. It should look like a bright parrot.
-    PIL.fromarray(outputNP*255).show() 
+    imageIO.imwrite(outputNP)
     
     print "Success!\n"
     return 0;
@@ -87,8 +86,13 @@ if __name__ == '__main__':
 
 
 # Exercise:
+# write Halide code that takes an input RGB image and returns a 1-channel output with its luminance
+# the equivalent Python code is below. 
+
 def luminance(im):
     output=numpy.empty(im.shape[0], im.shape[1])
     for y in xrange(im.shape[0]):
         for x in xrange(im.shape[1]):
                 output[y, x]=0.3*im[y, x, 0]+0.6*im[y, x, 1]+0.1*im[y, x, 2]
+
+

@@ -154,7 +154,7 @@ def main():
     gradient.split(y, y_outer, y_inner, 2)
     gradient.reorder(x_inner, y_inner, x_outer, y_outer)
 
-    # This pattern is common enough that there's a shorthand for it:
+    # This pattern is common and important enough that there's a shorthand for it:
     # gradient.tile(x, y, x_outer, y_outer, x_inner, y_inner, 2, 2)
 
     print "Evaluating gradient in 2x2 tiles\n"
@@ -169,6 +169,9 @@ def main():
                     y = y_outer * 2 + y_inner
                     print "Evaluating at ", x, y, "->", x + y
     print "\n\n"
+
+    # We will work more with tiles in the next tutorial. 
+    # They are critical for high-performance image processing
 
 # Evaluating in vectors.
 

@@ -19,9 +19,7 @@
 import os, sys
 from halide import *
 # The only Halide module  you need is halide. It includes all of Halide
-
-#Python Imaging Library will be used for IO
-import Image as PIL
+import imageIO
 
 def main():
     # This program defines a single-stage imaging pipeline that
@@ -51,10 +49,12 @@ def main():
     # 'x + y' implicitly become 'Expr' objects.
     e = x + y;
 
-    # We then cast this expressioninto a float.
+    # Halide does type inference. Var objects represent 32-bit integers, so the 
+    # Expr object 'x + y' also represents a 32-bit integer, 
+    # This is why we cast this expressioninto a float.
+    e=cast(Float(32), e)
     # Note that like in any Python program we can reuse the same variable
     # name (here e) and assign it to a new value that might depend on the previous one. 
-    e=cast(Float(32), e)
     
     # Now we'll add a definition for the Func object. At pixel x, y,
     # the image will have the value of the Expr e. On the left hand 
@@ -81,25 +81,17 @@ def main():
     # implements the pipeline we've defined, and then runs it.  We
     # also need to tell Halide the domain over which to evaluate the
     # Func, which determines the range of x and y above, and the
-    # resolution of the output image. The Halide module also provides a basic
-    # templatized Image type we can use. We'll make a 512 x 512
-    # image.
+    # resolution of the output image. We'll make a 512 x 512
+    # image. By default, realize computes from 0,0 to the provided width and height
+    # In general, realize needs one size for each dimension (each Var) of your Func 
     output = gradient.realize(512, 512)    
- 
-    # Halide does type inference for you. Var objects represent
-    # 32-bit integers, so the Expr object 'x + y' also represents a
-    # 32-bit integer, and so 'gradient' defines a 32-bit image, and
-    # so we got a 32-bit signed integer image out when we call
-    # 'realize'. Halide types and type-casting rules are equivalent
-    # to C (and similar enough to Python).
 
-
-    # realize provides us with Halide's internal datatype for images
-    # we now convert it to a numpy array using a double-conversion
-    # (from Halide to the Python Imaging Library (PIL) and from PIL to numpy. 
+    # realize provides us with some Halide internal datatype representing image buffers.
+    # We want to convert it to a numpy array. For this, we first turn it into a 
+    # proper Halide Image using the Halide constructor Image(), and we then convert 
+    # it to a numpy array. It's a little verbose but not a big deal. 
     outputNP=numpy.array(Image(output))
-    
-    
+        
     # Let's check everything worked, and we got the output we were
     # expecting. Let's use regular Python for this.
 
@@ -112,22 +104,27 @@ def main():
                 print "Something went wrong! ", i, j, outputNP[i, j]
                        #"Pixel %d, %d was supposed to be %d, but instead it's %d\n",  i, j, i+j, output(i, j));
                 #return -1;
+    
+    # Let's write the image to disk using our Python imageIO module
+    # dividing by 1024 to normalize
+    imageIO.imwrite(outputNP/1024)
+    
     # Everything worked! We defined a Func, then called 'realize' on
     # it to generate and run machine code that produced an Image.
     print "Success!\n"
     
-    # Let's display the image using the Python Imaging Library
-    # the division by 4 is to normalize to 0..256
-    PIL.fromarray(outputNP/4).show() 
-
     
 #the usual Python module business
 if __name__ == '__main__':
     main()
 
 
-# Exercise:
+# Exercises:
 
+# perform the normalization by 1024 in the Halide code
+
+# Make the image size and the normalization a Python variable in the code. 
+# That is, define width and height as variables at the top of the code
 
 # Modify the above code to create an RGB gradient similar to the reference Python code below
 def rgbSmoothGradientPython():
@@ -138,6 +135,5 @@ def rgbSmoothGradientPython():
         for x in xrange(width):
             for c in xrange(3):
                 output[y, x, c]=(1-c)*cos(x)*cos(y)
-    
-
-
+# You will need add one channel/Var to your Halide code. 
+# Don't forget to forget to update realize to 
