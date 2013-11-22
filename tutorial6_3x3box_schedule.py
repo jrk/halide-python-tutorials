@@ -29,12 +29,15 @@ def runAndMeasure(myFunc, w, h, nTimes=5):
         output = myFunc.realize(w,h)
         L.append (time.time()-t)
     #print 'running times :', L
+    hIm=Image(output)
+    mpix=hIm.width()*hIm.height()
     print 'best: ', numpy.min(L), 'average: ', numpy.mean(L)
+    print  '%.5f seconds per megapixel (%.5f for %d megapixels)' % (numpy.mean(L)/mpix, numpy.mean(L), mpix)
     return numpy.min(L)        
 
 def main():
     #load the input, convert to single channel and turn into Halide Image
-    inputP=imageIO.imread('rgb.png')[:,:,1] #we'll just use the green channel
+    inputP=imageIO.imread('nt.png')[:,:,1] #we'll just use the green channel
     input=Image(Float(32), inputP)
     numpy.transpose(inputP) #flip x and y to follow Halide indexing and
     #make the code look more similar between Python and Halide
@@ -292,6 +295,9 @@ if __name__ == '__main__':
     main()
 
 ############# EXERCISES ###################
+
+# compute the speed per megapixel for different input image sizes
+
 
 # Write the equivalent python code for the following Halide schedules: 
 # You can assume that the image is an integer multiple of tile sizes when convenient.
