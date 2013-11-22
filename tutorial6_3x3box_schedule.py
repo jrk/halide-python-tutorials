@@ -23,7 +23,7 @@ import numpy
 def runAndMeasure(myFunc, w, h, nTimes=5):
     L=[]
     output=None
-    myFunc.compile_jit()
+    myFunc.compile_jit()    
     for i in xrange(nTimes):
         t=time.time()
         output = myFunc.realize(w,h)
@@ -73,7 +73,7 @@ def main():
     
     # Finally compile and run. 
     # Note that subtract two to the height and width to avoid boundary issues
-    print 'schedule 1:'
+    print '\n schedule 1, ROOT:'
     refTime = runAndMeasure(blur_y, input.width()-2, input.height()-2)
 
     # equivalent Python code:
@@ -117,9 +117,9 @@ def main():
     # in general, inline is good when the dependency is a single pixel
     # (no branching factor that would introduce redundant computation)
 
-    print 'schedule 2:'
+    print '\n schedule 2, INLINE:'
     t = runAndMeasure(blur_y, input.width()-2, input.height()-2)
-    print 'speedup: ', refTime/t
+    print 'speedup compared to root: %.2f' % (refTime/t)
 
     # equivalent Python code:
 
@@ -186,9 +186,9 @@ def main():
     # than inline. It still has some redundancy because of the enlargement at tile
     # boundaries 
 
-    print 'schedule 3:'
+    print '\n schedule 3: TILING'
     t = runAndMeasure(blur_y, input.width()-2, input.height()-2)
-    print 'speedup: ', refTime/t
+    print 'speedup compared to root: %.2f' % (refTime/t)
 
     # corresponding python code:
     if False: # I just want to save time and not execute it
@@ -264,21 +264,26 @@ def main():
     # Unlike the parallelism that we inherited from blur_y's yo loop, 
     # vectorization needs to be specified again because its loop nest is lower than 
     # the "compute_at" loop xo, whereas yo was above xo. 
-    blur_x.vectorize(xi, 8)
+    # Note that blur_x gets vectorized at x whereas blur_y's vectorize was called with xi
+    # This is because blur_x does not have a notion of x_i. Its tiling piggybacked on that 
+    # of blur_y, and as far as blur_x is concerned, it just gets called for a tile and has 
+    # a single granularity of x and y for this tile (although of course vectorize then adds 
+    # a second.   
+    blur_x.vectorize(x, 8)
 
 
     # This schedule achieves the same excellent locality  and low redundancy 
     # as the above tiling and fusion. In addition, it leverages high parallelism. 
 
-    print 'schedule 4:'
+    print '\n schedule 4: TILE & PARALLEL'
     t = runAndMeasure(blur_y, input.width()-2, input.height()-2)
-    print 'speedup: ', refTime/t
+    print 'speedup compared to root: %.2f' % (refTime/t)
 
     # the equivalent python code would be similar as above but with a parallel y loop 
     # and a modified inner xi loop. In effect, vectorization adds an extra level of nesting 
     # in strides of 8 but unrolls the innermost level into single vector instructions
 
-    print 'success!'
+    print '\n success!'
     return 0
 
 

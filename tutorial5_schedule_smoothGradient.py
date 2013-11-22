@@ -461,4 +461,9 @@ def main():
 if __name__ == '__main__': 
     main()
 
+########## Exercise ########## 
+
+# measure the time of the default schedule and that of the last one. 
+# Report your times and the acceleration factor. 
+
 
