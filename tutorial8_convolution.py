@@ -53,9 +53,7 @@ def main():
 
     # Finally, we define what the reduction should do for each reduction value. 
     # In this case, we eant to add each reduction value
-
-    # update function is going to be called....
-    mySum[c] +=val
+    mySum[c]+=val
 
 
     # Finally, we define our final Func as the sum divided by the image number of pixels. 
@@ -69,49 +67,13 @@ def main():
     print outputNP
 
     # equivalent Python code
-
-    tmp = numpy.empty((3));
     out = numpy.empty((3));
     for c in xrange(input.channels()):
-        tmp[c]=0.0
+        out[c]=0.0
     for ry in xrange(0, input.height()):
         for rx in xrange(0, input.width()):
             for c in nxrange(input.channels()):
-                tmp[c]+=input[rx, ry, c]
-    for c in xrange(input.channels()):
-        out[c]=tmp[c]/(input.width()*input.height())
-
-    x, y, c = Var('x'), Var('y'), Var('c')     
-    mySum = Func('mySum')
-    myAverage = Func('myAverage')
-    helper=Func()
-    r = RDom(0,    input.width(), 0,    input.height(), 'r')
-
-    val=input[r.x, r.y, c]
-
-
-    mySum[c]=0.0    
-    mySum[c]+=val
-
-    mySuperSum[c]=mySum[c]
-
-
-
-    # Finally, we define our final Func as the sum divided by the image number of pixels. 
-    myAverage[c]=mySum[c]/(input.width()*input.height())
-
-    # As usual, all we have done so far is create a Halide internal representation.
-    # We now call realize() to compile and execute. 
-    output = myAverage.realize(input.channels());
-
-    outputNP=numpy.array(Image(output))
-    print outputNP
-
-
-    # 8 bit histogram
-
-
-
+                out[c]+=input[rx, ry, rc]
 
 
     # let's extend the example above with an extra reduction stage that compute the 

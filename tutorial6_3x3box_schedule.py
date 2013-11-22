@@ -30,17 +30,19 @@ def runAndMeasure(myFunc, w, h, nTimes=5):
         L.append (time.time()-t)
     #print 'running times :', L
     hIm=Image(output)
-    mpix=hIm.width()*hIm.height()
+    mpix=hIm.width()*hIm.height()/1e6
     print 'best: ', numpy.min(L), 'average: ', numpy.mean(L)
-    print  '%.5f seconds per megapixel (%.5f for %d megapixels)' % (numpy.mean(L)/mpix, numpy.mean(L), mpix)
+    print  '%.5f ms per megapixel (%.7f ms for %d megapixels)' % (numpy.mean(L)/mpix*1e3, numpy.mean(L)*1e3, mpix)
     return numpy.min(L)        
 
 def main():
     #load the input, convert to single channel and turn into Halide Image
-    inputP=imageIO.imread('nt.png')[:,:,1] #we'll just use the green channel
+    inputP=imageIO.imread('hk.png')[:,:,1] #we'll just use the green channel
     input=Image(Float(32), inputP)
     numpy.transpose(inputP) #flip x and y to follow Halide indexing and
     #make the code look more similar between Python and Halide
+
+    print '\n done reading the input\n'
     
     ##Declarations of Halide variable and function names
     
