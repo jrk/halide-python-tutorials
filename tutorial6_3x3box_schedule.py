@@ -141,7 +141,7 @@ def main():
     # The reciprocal probably would stay in register, making everything blazingly fast. 
     # Compilers can be pretty smart.  
 
-#### SCHEDULE 3 : TILING and FUSION ####
+#### SCHEDULE 3 : TILING and INTERLEAVING ####
 
     # This is a good schedule (good locality, limited redundancy) that performs 
     # computation in tiles and interleaves the two stages of the pipeline within a tile
@@ -163,6 +163,9 @@ def main():
     # That is, we schedule a producer with respect to its consumer(s)
     
     blur_y.tile(x, y, xo, yo, xi, yi, 256, 32)  #compute in tiles of 256x32
+    # There is also a shorter version of the tile syntax that reuses the original 
+    # Vars x, y for the outer tile indices: 
+    # blur_y.tile(x, y, xi, yi, 256, 32)
 
     # We now specify when the earlier (producer) stage blur_x gets evaluated.
     # We decide to compute it at the tile granularity of blur_y and use the
@@ -177,7 +180,7 @@ def main():
     # larger above and below to accomodate the 1x3 vertical stencil of blur_y
     # This is all done under the hood and the programmer doesn't need to worry
     # about it
-    blur_x.compute_at(blur_y, x) 
+    blur_x.compute_at(blur_y, xo) 
 
     # This schedule achieves better locality than root but with a lower redundancy
     # than inline. It still has some redundancy because of the enlargement at tile
@@ -209,10 +212,10 @@ def main():
                         out[x,y] = (blur_x[x,y]+blur_x[x,y+1]+blur_x[x,y+2])/3
 
 
-#### SCHEDULE 4 : TILING, FUSION, and PARALLELISM ####
+#### SCHEDULE 4 : TILING, INTERLEAVING, and PARALLELISM ####
 
     # This is a high-performance schedule that adds multicore and SIMD parallelism 
-    # to the fused and tiled schedule above. 
+    # to the tiled and interleaved schedule above. 
 
     # redefine everything to start fresh
     x, y = Var('x'), Var('y') 
@@ -240,6 +243,13 @@ def main():
     # it won't work 
     blur_y.vectorize(xi, 8)
 
+    # the above three scheduling instructions can be piped into a more compact version: 
+    # blur_y.tile(x, y, xo, yo, xi, yi, 256, 32).parallel(yo).vectorize(xi, 8)
+    # or with nicer formatting: 
+    # blur_y.tile(x, y, xo, yo, xi, yi, 256, 32) \
+    #       .parallel(yo) \
+    #       .vectorize(xi, 8)
+
     # We now specify when the earlier (producer) stage blur_x gets evaluated.
     # We decide to compute it at the tile granularity of blur_y and use the
     # compute_at method. 
@@ -248,9 +258,12 @@ def main():
     # since xo is nested inside blur_y's yo and since yo is evaluated in parallel, 
     # then blur_x will also be evaluated in parallel
     # Again, we don't need to worry about bound expansion
-    blur_x.compute_at(blur_y, x) 
+    blur_x.compute_at(blur_y, xo) 
 
     # We then specify that blur_x too should be vectorized
+    # Unlike the parallelism that we inherited from blur_y's yo loop, 
+    # vectorization needs to be specified again because its loop nest is lower than 
+    # the "compute_at" loop xo, whereas yo was above xo. 
     blur_x.vectorize(xi, 8)
 
 
@@ -267,8 +280,26 @@ def main():
 
     print 'success!'
     return 0
-    
+
+
 #usual python business to declare main function in module. 
 if __name__ == '__main__': 
     main()
+
+############# EXERCISES ###################
+
+# Write the equivalent python code for the following Halide schedules: 
+# You can assume that the image is an integer multiple of tile sizes when convenient.
+
+# schedule 5:
+# blur_y.compute_root() 
+# blur_x.compute_at(blur_y, x)
+
+# schedule 6:
+# blur_y.tile(x, y, xo, yo, xi, yi, 256, 32)
+# blur_x.compute_at(blur_y, yo)
+
+# schedule 7
+# blur_y.split(x, xo, xi, 8)
+# blur_x.compute_at(blur_y, y)
 
