@@ -20,6 +20,7 @@ import os, sys
 from halide import *
 # The only Halide module  you need is halide. It includes all of Halide
 import imageIO
+reload(imageIO)
 
 def main():
     # This program defines a single-stage imaging pipeline that
@@ -91,7 +92,7 @@ def main():
     # proper Halide Image using the Halide constructor Image(), and we then convert 
     # it to a numpy array. It's a little verbose but not a big deal. 
     outputNP=numpy.array(Image(output))
-        
+
     # Let's check everything worked, and we got the output we were
     # expecting. Let's use regular Python for this.
 
@@ -100,9 +101,7 @@ def main():
             # We can access a pixel of an Image object using similar
             # syntax to defining and using functions. 
             if outputNP[i, j] != i + j:
-            #if True:
                 print "Something went wrong! ", i, j, outputNP[i, j]
-                       #"Pixel %d, %d was supposed to be %d, but instead it's %d\n",  i, j, i+j, output(i, j));
                 #return -1;
     
     # Let's write the image to disk using our Python imageIO module

@@ -50,7 +50,8 @@ def main():
     # In terms of images, it returns the pixel on the dge nearest to x, y
     clamped = Func('clamped') 
     clamped[x, y, c] = input[clamp(x, 0, input.width()-1),
-                          clamp(y, 0, input.height()-1), c]
+                             clamp(y, 0, input.height()-1), 
+                             c]
 
     ##### MODIFIED CODE ####
 
@@ -68,7 +69,7 @@ def main():
     # in Halide representation
     # Most operators and functions you expect are supported.
     # Check the documentation for the full list. 
-    gradientMagnitude[x,y,c]= sqrt(gx[x,y,c]**2+gy[x,y,c]**2)
+    gradientMagnitude[x,y,c]= sqrt(gx[x,y,c]**2 + gy[x,y,c]**2)
     
     # As usual, all we have done so far is create a Halide internal representation.
     # No computation has happened yet.
@@ -103,15 +104,18 @@ def sobelMagnitude(lumi):
         for x in xrange(lumi.shape[1]):
             gx[y,x]= (- pix(y-1, x-1, lumi) + pix(y-1, x+1, lumi) 
                      - 2*pix(y, x-1, lumi) + 2*pix(y, x+1, lumi) 
-                     - pix(y+1, x-1, lumi) + pix(y+1 x+1, lumi) )/4.0
+                     - pix(y+1, x-1, lumi) + pix(y+1, x+1, lumi) )/4.0
     gy=numpy.empty(lumi.shape)
     for y in xrange(lumi.shape[0]):
         for x in xrange(lumi.shape[1]):
             gx[y,x]= (- pix(y-1, x-1, lumi) + pix(y+1, x-1, lumi) 
                      - 2*pix(y-1, x, lumi) + 2*pix(y+1, x, lumi) 
-                     - pix(y-1, x+1, lumi) + pix(y+1 x+1, lumi) )/4.0
+                     - pix(y-1, x+1, lumi) + pix(y+1, x+1, lumi) )/4.0
     mag=numpy.empty(lumi.shape)
     for y in xrange(lumi.shape[0]):
         for x in xrange(lumi.shape[1]):
             mag[y,x]=sqrt(gx[y,x]**2+gy[y,x]**2)
     return mag
+
+
+

@@ -41,8 +41,8 @@ def imwrite(im, path='out.png' ,gamma=2.2):
     Unless the gamma parameter is 1.0. 
     This new version can also handle single-channel images'''
 
-    if !issubclass(im.dtype.type, numpy.float):
-        print 'Problem, the array does not contain floats'
+    if issubclass(im.dtype.type, numpy.int):
+        print 'Problem in imwrite, the array does not contain floats but ints: ', im.dtype 
         return
     if len(im.shape)==2: return imwriteGrey(im, path, gamma)
     global baseOutputPath
@@ -63,17 +63,15 @@ def imwriteSeq(im, path='out'):
     seqCount+=1
 
 
-def imwriteGrey(im, path='raw.png'):
+def imwriteGrey(im, path='raw.png', gamma=1.0):
     '''takes a 2D numpy array organized along Y, X and writes it to a PNG file.
     The values are assumed to be linear between 0 and 1 and are NOT gamma encoded before writing.'''
     global baseOutputPath
-    print im
-    print im.shape
     y,x=im.shape[0], im.shape[1]
     im2=numpy.clip(im, 0, 1)
     writer = png.Writer(x,y,greyscale=True)
     f=open(baseOutputPath+path, 'wb')
-    writer.write(f, im2*255)
+    writer.write(f, 255*im**(1/gamma))
     f.close()
 
 def constantIm(y, x, color=0):
