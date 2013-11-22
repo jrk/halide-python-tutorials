@@ -62,7 +62,7 @@ def main():
     output = gradientMagnitude.realize(input.width()-1, input.height()-1, input.channels());
 
     outputNP=numpy.array(Image(output))
-    imageIO.imwrite(outputNP)
+    imageIO.imwrite(outputNP, gamma=1.0)
     print 'success!'
 
     return 0
