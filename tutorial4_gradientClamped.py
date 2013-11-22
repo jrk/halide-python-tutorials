@@ -79,6 +79,7 @@ def main():
     outputNP=numpy.array(Image(output))
     imageIO.imwrite(outputNP, gamma=1.0)
 
+    print 'success!'
 
 #usual python business to declare main function in module. 
 if __name__ == '__main__': 
