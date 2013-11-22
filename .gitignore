@@ -2,3 +2,5 @@
 Input/rgb.png
 
 imageIO.pyc
+*.pyc
+Output
