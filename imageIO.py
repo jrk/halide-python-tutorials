@@ -7,6 +7,7 @@ baseOutputPath='Output/'
 def imread(path='in.png', gamma=2.2):
     '''reads a PNG RGB image at baseInputPath+path and return a numpy array organized along Y, X, channel.
     The values are encoded as float and are linearized (i.e. gamma is decoded)'''
+    print 'reading ', path
     global baseInputPath
     reader=png.Reader(baseInputPath+path)
     im=reader.asFloat()
@@ -16,6 +17,7 @@ def imread(path='in.png', gamma=2.2):
     x, y=im[0], im[1]
     a.resize(y, x, 3)
     a**=gamma
+    print '           done reading ', path
     return a
 
 def imread_lumi(path='in.png', gamma=2.2):
@@ -46,6 +48,7 @@ def imwrite(im, path='out.png' ,gamma=2.2):
         return
     if len(im.shape)==2: return imwriteGrey(im, path, gamma)
     global baseOutputPath
+    print 'writing ', path
     y,x=im.shape[0], im.shape[1]
     im=numpy.clip(im, 0, 1)
     im=im.reshape(y, x*3)
@@ -54,7 +57,7 @@ def imwrite(im, path='out.png' ,gamma=2.2):
     writer.write(f, 255*(im**(1/gamma)))
     f.close()
     im.resize(y, x, 3)
-
+    print '         done writing'
 seqCount=0
 def imwriteSeq(im, path='out'):
     global seqCount

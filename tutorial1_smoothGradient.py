@@ -122,9 +122,6 @@ if __name__ == '__main__':
 
 # perform the normalization by 1024 in the Halide code
 
-# Make the image size and the normalization a Python variable in the code. 
-# That is, define width and height as variables at the top of the code
-
 # Modify the above code to create an RGB gradient similar to the reference Python code below
 def rgbSmoothGradientPython():
     width=400

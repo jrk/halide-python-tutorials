@@ -298,7 +298,7 @@ if __name__ == '__main__':
 
 ############# EXERCISES ###################
 
-# compute the speed per megapixel for different input image sizes
+# compute the speed per megapixel for the above 4 schedules. Turn in in README
 
 
 # Write the equivalent python code for the following Halide schedules: 
@@ -309,10 +309,10 @@ if __name__ == '__main__':
 # blur_x.compute_at(blur_y, x)
 
 # schedule 6:
-# blur_y.tile(x, y, xo, yo, xi, yi, 256, 32)
+# blur_y.tile(x, y, xo, yo, xi, yi, 2, 2)
 # blur_x.compute_at(blur_y, yo)
 
 # schedule 7
-# blur_y.split(x, xo, xi, 8)
+# blur_y.split(x, xo, xi, 2)
 # blur_x.compute_at(blur_y, y)
 
