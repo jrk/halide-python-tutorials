@@ -74,7 +74,7 @@ def imwriteGrey(im, path='raw.png', gamma=1.0):
     im2=numpy.clip(im, 0, 1)
     writer = png.Writer(x,y,greyscale=True)
     f=open(baseOutputPath+path, 'wb')
-    writer.write(f, 255*im**(1/gamma))
+    writer.write(f, 255*im2**(1/gamma))
     f.close()
 
 def constantIm(y, x, color=0):

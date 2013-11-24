@@ -464,6 +464,8 @@ if __name__ == '__main__':
 ########## Exercise ########## 
 
 # measure the time of the default schedule and that of the last one. 
+# Use 800x600 in both cases
 # Report your times and the acceleration factor. 
+# This example is simple enough, there might not be a significant speedup
 
 

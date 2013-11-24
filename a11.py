@@ -35,7 +35,8 @@ def pythonCodeForBoxSchedule5(lumi):
         Write the python nested loops corresponding to the 3x3 box schedule 5
         and return a list representing the order of evaluation. 
         Each time you perform a computation of blur_x or blur_y, put a triplet with the name 
-        of the function (string 'blur_x' or 'blur_y') and the output coordinates x and y. '''
+        of the function (string 'blur_x' or 'blur_y') and the output coordinates x and y. 
+        e.g. [('blur_x', 0, 0), ('blur_y', 0,0), ('blur_x', 0, 1), ...] '''
         
         # schedule 5:
         # blur_y.compute_root() 
@@ -46,7 +47,8 @@ def pythonCodeForBoxSchedule6(lumi):
         Write the python nested loops corresponding to the 3x3 box schedule 5
         and return a list representing the order of evaluation. 
         Each time you perform a computation of blur_x or blur_y, put a triplet with the name 
-        of the function (string 'blur_x' or 'blur_y') and the output coordinates x and y. '''
+        of the function (string 'blur_x' or 'blur_y') and the output coordinates x and y. 
+        e.g. [('blur_x', 0, 0), ('blur_y', 0,0), ('blur_x', 0, 1), ...] '''
         
         # schedule 6:
         # blur_y.tile(x, y, xo, yo, xi, yi, 2, 2)
@@ -58,7 +60,8 @@ def pythonCodeForBoxSchedule7(lumi):
         Write the python nested loops corresponding to the 3x3 box schedule 5
         and return a list representing the order of evaluation. 
         Each time you perform a computation of blur_x or blur_y, put a triplet with the name 
-        of the function (string 'blur_x' or 'blur_y') and the output coordinates x and y. '''
+        of the function (string 'blur_x' or 'blur_y') and the output coordinates x and y. 
+        e.g. [('blur_x', 0, 0), ('blur_y', 0,0), ('blur_x', 0, 1), ...] '''
         
         # schedule 7
         # blur_y.split(x, xo, xi, 2)
