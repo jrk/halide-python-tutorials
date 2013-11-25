@@ -17,6 +17,71 @@ import imageIO
 
 def main():
     
+## SUM ONLY
+
+    # As usual, let's load an input
+    im=imageIO.imread('rgb.png')    
+    # and create a Halide representation of this image
+    input = Image(Float(32), im)
+
+    # Next we declaure the Vars and Func
+    x, y, c = Var(), Var(), Var() 
+    mySum = Func()
+
+    # The central tool to express a reduction is a reduction domain, called RDom
+    # it corresponds to the bounds of the reduction loop you would write in an 
+    # imperative language. Here we want to iterate over a 2D domain corresponding 
+    # to the whole image. 
+    # Note however that we have decided to compute a different sum for each channel, 
+    # So we will not reduce over channels. 
+    r = RDom(0,    input.width(), 0,    input.height())                
+
+    # Given a reduction domain, we define the Expr that we will sum over, in this
+    # case the pixel values. By construction, the first and second dimension of a 
+    # reduction domain are called x and y. In this case they happen to correspond 
+    # to the image x and y coordinates but they don't have to. 
+    # Note that x & y are the reduction variables but c is a normal Var.
+    # this is because our sum is over x,y but not over c. There will be a different 
+    # sum for each channel. 
+    val=input[r.x, r.y, c]
+
+    # A reduction Func first needs to be initialized. Here, our sum gets initialized to 0
+    # Note that the function domain here is only the channel. 
+    mySum[c]=0.0
+
+    # Finally, we define what the reduction should do for each reduction value. 
+    # In this case, we eant to add each reduction value to the output
+    # This is called the update function, and it's going to be called for each 
+    # location in the RDom. 
+    # You never write an explicit loop over the RDom, Halide does it for you. 
+    mySum[c] +=val
+
+    # We now call realize() to compile and execute. 
+    output = mySum.realize(input.channels());
+
+    outputNP=numpy.array(Image(output))
+    print outputNP
+
+    # equivalent Python code
+
+    out = numpy.empty((3));
+
+    # first loop to initialize the reduction
+    for c in xrange(input.channels()):
+        out[c]=0.0
+    # VERY IMPORTANT : 
+    # Note that loops for the reduction variables are outermost. 
+    # whereas c in this case is innermost. 
+    for ry in xrange(0, input.height()):
+        for rx in xrange(0, input.width()):
+            for c in nxrange(input.channels()):
+                #update function
+                out[c] += input[rx, ry, c]
+
+
+
+## AVERAGE
+
     # As usual, let's load an input
     im=imageIO.imread('rgb.png')    
     # and create a Halide representation of this image
@@ -72,7 +137,11 @@ def main():
 
     tmp = numpy.empty((3));
     out = numpy.empty((3));
+
+    # loop for myAverage
     for c in xrange(input.channels()):
+        # inline schedule: dump the code for 
+
         tmp[c]=0.0
     for ry in xrange(0, input.height()):
         for rx in xrange(0, input.width()):
@@ -80,6 +149,9 @@ def main():
                 tmp[c]+=input[rx, ry, c]
     for c in xrange(input.channels()):
         out[c]=tmp[c]/(input.width()*input.height())
+
+
+# Misc discussion with jrk
 
     x, y, c = Var('x'), Var('y'), Var('c')     
     mySum = Func('mySum')
@@ -94,8 +166,6 @@ def main():
     mySum[c]+=val
 
     mySuperSum[c]=mySum[c]
-
-
 
     # Finally, we define our final Func as the sum divided by the image number of pixels. 
     myAverage[c]=mySum[c]/(input.width()*input.height())

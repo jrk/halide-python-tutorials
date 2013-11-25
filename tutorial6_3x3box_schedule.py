@@ -197,24 +197,37 @@ def main():
 
     # corresponding python code:
     if False: # I just want to save time and not execute it
+        L=[]
         width, height = input.width()-2, input.height()-2
         out=numpy.empty((width, height))
-        for yo in xrange(ceil(height/32.0)): 
-            for xo in xrange(ceil(width/256.0)):
+        for yo in xrange((height+31)/32): #+31 is here to get the ceiling int                                         
+            for xo in xrange((width+255)/256):
                 # first compute blur_x
                 # allocate a temporary buffer
-                tmp=numpy.empty((256, 32)) 
-                for yi in xrange(32):
-                    y=min(yo*32+yi, height)
-                    for xi in xrange(256/8):
-                        x=min(xo*256+xi, width)
-                        tmp[x,y]=(inputP[x,y]+inputP[x+1,y]+inputP[x+2,y])/3
+                #Note the +2 below in both the allocation and the for loop.
+                # We need an enlarged tile to prepare all the
+                # data needed by a tile of blur_y blur_y needs
+                tmp=numpy.empty((256, 32+2)) 
+                for yi in xrange(32+2):
+                    y=yo*32+yi
+                    if y>=height: y=height-1
+                    for xi in xrange(256):
+                        x=xo*256+xi
+                        if x>=width: x=width-1
+                        # note that we store things at xi, yi
+                        tmp[xi,yi]=(inputP[x,y]+inputP[x+1,y]+inputP[x+2,y])/3
+                        L.append(('blur_x', x, y))
                 #compute blur_y
                 for yi in xrange(32):
-                    y=min(yo*32+yi, height)
-                    for xi in xrange(256/8):
-                        x=min(xo*256+xi, width)
-                        out[x,y] = (blur_x[x,y]+blur_x[x,y+1]+blur_x[x,y+2])/3
+                    y=yo*32+yi
+                    if y>=height: y=height-1
+                    for xi in xrange(256):
+                        x=xo*256+xi
+                        if x>=width: x=width-1
+                        #Note below that out is stored at x, y
+                        # but tmp is read at xi, yi
+                        out[x,y] = (tmp[xi,yi]+tmp[xi,yi+1]+tmp[xi,yi+2])/3
+                        L.append(('blur_y', x, y))
 
 
 #### SCHEDULE 4 : TILING, INTERLEAVING, and PARALLELISM ####

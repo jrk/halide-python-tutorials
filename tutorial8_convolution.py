@@ -1,13 +1,7 @@
-# Halide tutorial lesson 7.
+# Halide tutorial lesson 8.
 
-# This lesson illustrates reductions
+# This lesson illustrates convolution using reduction
 
-# We will compute the average RGB value of an image
-# that is, we will return a 1D array with only 3 values
-
-# One important thing to remember from this lesson is that there is never 
-# any explicit for loop in Halide, whether is't the loop over output pixels
-# or the reduction loop over the input pixels for the reduction. It's all implicit
 
 import os, sys
 from halide import *
@@ -17,73 +11,57 @@ import imageIO
 
 def main():
     
-    # As usual, let's load an input
-    im=imageIO.imread('rgb.png')    
-    # and create a Halide representation of this image
+    im=imageIO.imread('rgb.png')[:, :, 1]  
     input = Image(Float(32), im)
+    x, y, c = Var('x'), Var('y'), Var('c') #declare domain variables
 
-    # Next we declaure the Vars
-    x, y, c = Var('x'), Var('y'), Var('c') 
+    blur_x = Func('blur_x') 
+    blur_y = Func('blur_y')
+    blur   =Func('blur')
+
+    kernel = Func('kernel')
     
-    # Next we declare our Funcs. 
-    # We will have one for the sum before division by the number of pixels, 
-    # and one for the final average. 
+    sigma = 5.5
+    kernel_width = int(sigma*6+1)   
 
-    mySum = Func('mySum')
-    myAverage = Func('myAverage')
+    kernel[x]=exp(-(x- kernel_width/2.0)**2/(2.0*sigma**2))
+    
+    # declare and define a clamping function that restricts x,y to the image size
+    # boring but necessary
+    clamped = Func('clamped') 
+    clamped[x, y, c] = input[clamp(x, 0, input.width()-1),
+                          clamp(y, 0, input.height()-1), c]
 
-    # The central tool to express a reduction is a reduction domain, called RDom
-    # it corresponds to the bounds of the reduction loop you would write in an 
-    # imperative language. Here we want to iterate over a 2D domain corresponding 
-    # to the whole image. Note however that we will note reduce over channels. 
-    r = RDom(0,    input.width(), 0,    input.height(), 'r')                
+    rx = RDom(0,    kernel_width, 'rx')                
+    val=clamped[x+rx.x-kernel_width/2, y, c] *kernel[rx.x]
+            
+    blur_x[x,y,c] = 0.0
+    blur_x[x,y,c] += val
 
-    # Given a reduction domain, we define the Expr that we will sum over, in this
-    # case the pixel values. By construction, the first and second dimension of a 
-    # reduction domain are called x and y. In this case they happen to correspond 
-    # to the image x and y coordinates but they don't have to. 
-    # Note that x & y are the reduction variables but c is a normal Var.
-    # this is because our sum is over x,y but not over c. There will be a different 
-    # sum for each channel. 
-    val=input[r.x, r.y, c]
+    clampedBlurx = Func('clampedBlurx') 
+    clampedBlurx[x, y, c] = blur_x[clamp(x, 0, input.width()-1),
+                              clamp(y, 0, input.height()-1), c]
 
-    # A reduction Func first needs to be initialized. Here, our sum gets initialized at 0
-    # Note that the function domain here is only the channel. 
-    mySum[c]=0.0
+    ry = RDom(0,    kernel_width, 'ry')                
+    val=clampedBlurx[x, y+ry.x-kernel_width/2, c]*kernel[ry.x] #ry.x is confusing but oh well
+            
+    blur_y[x,y,c] = 0.0
+    blur_y[x,y,c] += val
+    
+    
+    blur[x,y,c] = blur_y[x,y,c]/(2*3.14159*sigma**2)
 
-    # Finally, we define what the reduction should do for each reduction value. 
-    # In this case, we eant to add each reduction value
-    mySum[c]+=val
-
-
-    # Finally, we define our final Func as the sum divided by the image number of pixels. 
-    myAverage[c]=mySum[c]/(input.width()*input.height())
-
-    # As usual, all we have done so far is create a Halide internal representation.
-    # We now call realize() to compile and execute. 
-    output = myAverage.realize(input.channels());
+    #schedule attempt
+    xi, yi, xo, yo=Var('xi'), Var('yi'), Var('xo'), Var('yo')
+    blur.tile(x, y, xo, yo, xi, yi, 128, 128).parallel(yo).vectorize(xi, 8)
+    blur_y.compute_at(blur, xo).vectorize(xi, 8)
+    blur_x.compute_at(blur, xo).vectorize(xi, 8)
+    kernel.compute_root()
+    
+    output = blur.realize(input.width(), input.height(), input.channels());
 
     outputNP=numpy.array(Image(output))
-    print outputNP
 
-    # equivalent Python code
-    out = numpy.empty((3));
-    for c in xrange(input.channels()):
-        out[c]=0.0
-    for ry in xrange(0, input.height()):
-        for rx in xrange(0, input.width()):
-            for c in nxrange(input.channels()):
-                out[c]+=input[rx, ry, rc]
-
-
-    # let's extend the example above with an extra reduction stage that compute the 
-    # average across the three channels
-
-    avAcrossChannel = Func('avAcrossChannel')
-    r = RDom(0, input.channels(), 'rChannel')
-    val=myAverage[r.x]
-    avAcrossChannel[]= 0
-    avAcrossChannel[]+=val
 
 
 
