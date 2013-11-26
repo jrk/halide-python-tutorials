@@ -58,7 +58,9 @@ def imwrite(im, path='out.png' ,gamma=2.2):
     f.close()
     im.resize(y, x, 3)
     print '         done writing'
+
 seqCount=0
+
 def imwriteSeq(im, path='out'):
     global seqCount
     path=path+str(seqCount)+'.png'
@@ -69,6 +71,7 @@ def imwriteSeq(im, path='out'):
 def imwriteGrey(im, path='raw.png', gamma=1.0):
     '''takes a 2D numpy array organized along Y, X and writes it to a PNG file.
     The values are assumed to be linear between 0 and 1 and are NOT gamma encoded before writing.'''
+    print 'writing ', path
     global baseOutputPath
     y,x=im.shape[0], im.shape[1]
     im2=numpy.clip(im, 0, 1)
@@ -76,6 +79,7 @@ def imwriteGrey(im, path='raw.png', gamma=1.0):
     f=open(baseOutputPath+path, 'wb')
     writer.write(f, 255*im2**(1/gamma))
     f.close()
+    print '         done writing'
 
 def constantIm(y, x, color=0):
     out = numpy.empty([y, x, 3])

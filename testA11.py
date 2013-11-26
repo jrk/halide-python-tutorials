@@ -1,10 +1,10 @@
 import imageIO
-reload(imageIO)
+import numpy 
 
 def main():
     im=imageIO.imread('rgb.png')
     lumi=im[:,:,1] #I'm lazy, I'll just use green
-    smallLumi=lumi[0:5, 0:5]
+    smallLumi=numpy.transpose(lumi[0:5, 0:5])
 
     # Replace if False: by if True: once you have implement the required functions. 
     # Exercises:

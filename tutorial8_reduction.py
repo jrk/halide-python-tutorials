@@ -35,6 +35,8 @@ def main():
     # Note however that we have decided to compute a different sum for each channel, 
     # So we will not reduce over channels. 
     r = RDom(0,    input.width(), 0,    input.height())                
+    # careful, RDom are defined as base, extent, not min, max.
+    # This means that RDom(a, b) goes from a to a+b (obviously not an issue here)
 
     # Given a reduction domain, we define the Expr that we will sum over, in this
     # case the pixel values. By construction, the first and second dimension of a 
@@ -120,8 +122,10 @@ def main():
     # In this case, we eant to add each reduction value
 
     # update function is going to be called....
-    mySum[c] +=val
-
+    # can be any Expr  as a function of mySum[c] and the RDom
+    mySum[c] = mySum[c]+val
+    # as usual, the short version is 
+    # mySum[c] += input[r.x, r.y, c]
 
     # Finally, we define our final Func as the sum divided by the image number of pixels. 
     myAverage[c]=mySum[c]/(input.width()*input.height())

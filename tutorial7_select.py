@@ -46,7 +46,7 @@ def main():
     # Remember. All we've done so far is build a representation of a
     # Halide program in memory. We haven't actually processed any
     # pixels yet. We haven't even compiled that Halide program yet.
-    
+
     # So now we'll realize the Func. The size of the output image
     # should match the size of the input image. If we just wanted to
     # brighten a portion of the input image we could request a
